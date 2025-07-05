@@ -983,6 +983,192 @@ This section addresses the security implications of using Privacy Pass tokens in
 
 The security framework is designed to address the unique challenges of media transport and real-time communication, where high availability and low latency requirements must be balanced against security protections. Special attention is given to the security implications of interactive applications where real-time constraints may limit the feasibility of certain security measures.
 
+## Threat Model
+
+The threat model for Privacy Pass in MoQ environments considers multiple categories of attackers with different capabilities and motivations:
+
+### Malicious Clients
+
+**Capabilities**: Clients may attempt to:
+- Forge or modify tokens to gain unauthorized access
+- Replay valid tokens to exceed usage limits
+- Coordinate with other malicious clients to pool resources
+- Analyze token structure to extract sensitive information
+- Perform timing attacks against validation processes
+
+**Motivations**: 
+- Gain access to premium content without payment
+- Bypass geographic or regulatory restrictions
+- Conduct reconnaissance on service infrastructure
+- Disrupt service availability for legitimate users
+
+**Countermeasures**:
+- Cryptographic token validation prevents forgery
+- Replay protection mechanisms prevent token reuse
+- Rate limiting and quota enforcement limit abuse
+- Secure token generation prevents information leakage
+
+### Compromised Relays
+
+**Capabilities**: Compromised relays may:
+- Log and correlate client requests across sessions
+- Modify or drop authorization tokens
+- Inject malicious content into media streams
+- Coordinate with other compromised infrastructure
+- Exfiltrate usage patterns and client behavior data
+
+**Impact**: 
+- Privacy violations through request correlation
+- Service disruption through selective token rejection
+- Content integrity compromise
+- Large-scale surveillance of user behavior
+
+**Countermeasures**:
+- Token unlinkability prevents correlation across sessions
+- Cryptographic integrity protection prevents modification
+- Content signing and verification detect tampering
+- Distributed validation reduces single points of failure
+
+### Network-Level Attackers
+
+**Capabilities**: Network attackers may:
+- Intercept and analyze token exchange patterns
+- Perform traffic analysis to infer user behavior
+- Conduct man-in-the-middle attacks on token issuance
+- Exploit timing variations in token validation
+- Correlate network flows across different services
+
+**Scope**: 
+- ISP-level monitoring and traffic analysis
+- Government surveillance and censorship
+- Corporate network monitoring and filtering
+- Malicious network infrastructure compromise
+
+**Countermeasures**:
+- End-to-end encryption for all token exchanges
+- Traffic padding and timing randomization
+- Multiple network paths for token issuance
+- Decentralized validation to prevent centralized monitoring
+
+### Compromised Issuers
+
+**Capabilities**: Compromised issuers represent the highest-risk threat:
+- Issue fraudulent tokens to unauthorized clients
+- Correlate token issuance with subsequent usage
+- Modify token metadata to bypass restrictions
+- Coordinate with other compromised system components
+- Perform large-scale privacy violations
+
+**Impact**: 
+- Complete bypass of authorization controls
+- Systematic privacy violations across all users
+- Service integrity compromise
+- Regulatory and legal liability
+
+**Countermeasures**:
+- Multi-issuer federation to reduce single points of failure
+- Cryptographic auditing of token issuance
+- Regular security assessments and monitoring
+- Emergency revocation and key rotation procedures
+
+## Attack Vectors and Mitigations
+
+### Token Forgery and Modification
+
+**Attack Description**: Attackers may attempt to create fake tokens or modify existing tokens to gain unauthorized access or escalate privileges.
+
+**Technical Details**:
+- RSA signature forgery attempts on publicly verifiable tokens
+- VOPRF proof manipulation for privately verifiable tokens
+- Metadata tampering to expand authorization scope
+- Timestamp manipulation to extend token validity
+
+**Mitigation Strategies**:
+- Strong cryptographic algorithms (RSA-2048, P-384 elliptic curves)
+- Comprehensive signature verification including all token fields
+- Secure random number generation for token components
+- Regular cryptographic algorithm updates and monitoring
+
+### Replay Attacks
+
+**Attack Description**: Reusing valid tokens beyond their intended scope to gain unauthorized access or exceed usage limits.
+
+**Attack Variants**:
+- Cross-session replay using tokens from previous sessions
+- Cross-service replay using tokens intended for different services
+- Delayed replay after token expiration periods
+- Coordinated replay across multiple client instances
+
+**Mitigation Strategies**:
+- Cryptographic nonces to ensure token uniqueness
+- Distributed replay detection across relay infrastructure
+- Short token validity periods to limit replay windows
+- Session-specific token binding to prevent cross-session reuse
+
+### Traffic Analysis and Correlation
+
+**Attack Description**: Analyzing network traffic patterns to infer user behavior and correlate activities across sessions.
+
+**Analysis Techniques**:
+- Timing correlation of token requests and content access
+- Flow analysis to identify user behavioral patterns
+- Metadata analysis to extract user preferences
+- Cross-service correlation using network identifiers
+
+**Mitigation Strategies**:
+- Traffic padding to normalize message sizes and timing
+- Batch token issuance to reduce timing correlation
+- Proxy and mixnet integration for traffic anonymization
+- Randomized retry and backoff mechanisms
+
+### Side-Channel Attacks
+
+**Attack Description**: Exploiting implementation details and timing variations to extract sensitive information about tokens or users.
+
+**Side-Channel Types**:
+- Timing attacks on token validation processes
+- Power analysis of cryptographic operations
+- Cache timing attacks on token storage systems
+- Electromagnetic emanation analysis
+
+**Mitigation Strategies**:
+- Constant-time cryptographic implementations
+- Secure hardware modules for sensitive operations
+- Regular security audits and penetration testing
+- Countermeasures against physical side-channel attacks
+
+### Denial of Service (DoS) Attacks
+
+**Attack Description**: Overwhelming system resources to disrupt service availability for legitimate users.
+
+**DoS Variants**:
+- Token validation flooding to overload relay resources
+- Issuer overload through excessive token requests
+- Network-level attacks against token distribution infrastructure
+- Distributed attacks coordinated across multiple clients
+
+**Mitigation Strategies**:
+- Rate limiting at multiple system layers
+- Resource isolation and quotas for different client classes
+- Distributed validation to prevent single points of failure
+- Automatic scaling and load balancing mechanisms
+
+### Policy Bypass and Privilege Escalation
+
+**Attack Description**: Circumventing access control policies or gaining elevated privileges through token manipulation.
+
+**Bypass Techniques**:
+- Metadata manipulation to expand authorization scope
+- Cross-domain token usage to access restricted content
+- Timing attacks to exploit policy enforcement gaps
+- Social engineering to obtain elevated privilege tokens
+
+**Mitigation Strategies**:
+- Comprehensive token scope validation
+- Cross-domain token binding and restrictions
+- Regular policy audits and security assessments
+- Least-privilege principle in token metadata design
+
 ## Token Validation
 
 Proper token validation is critical to the security of the entire system. Relays MUST properly validate Privacy Pass tokens according to {{RFC9576}} and {{RFC9578}}, with additional considerations for MoQ-specific requirements and performance constraints.
@@ -1003,60 +1189,294 @@ For real-time applications, validation must be optimized for performance:
 - **Optimized Cryptography**: Use hardware acceleration for cryptographic operations when available
 - **Precomputed Values**: Precompute expensive cryptographic operations during system initialization
 
+### Validation Implementation Requirements
+
+**Cryptographic Validation Security**:
+- Implementations MUST use cryptographically secure libraries for all validation operations
+- Random number generation MUST use cryptographically secure random number generators
+- Timing attacks MUST be prevented through constant-time implementations
+- Memory handling MUST prevent information leakage through secure memory allocation and cleanup
+
+**Validation State Management**:
+- Token validation state MUST be managed securely to prevent information leakage
+- Validation caches MUST be protected against unauthorized access and manipulation
+- Replay detection databases MUST be maintained securely with appropriate access controls
+- Validation logs MUST be protected against tampering and unauthorized access
+
+**Performance Security Trade-offs**:
+- Validation performance optimizations MUST NOT compromise security guarantees
+- Cached validation results MUST maintain security properties of full validation
+- Parallel validation operations MUST be coordinated to prevent race conditions
+- Hardware acceleration MUST be validated for security vulnerabilities
+
+### Validation Failure Handling
+
+**Secure Error Responses**:
+- Validation failures MUST NOT leak sensitive information about token structure or issuer state
+- Error messages MUST be standardized to prevent information inference attacks
+- Timing of error responses MUST be consistent regardless of failure type
+- Error handling MUST prevent denial of service through excessive error processing
+
+**Validation Logging and Monitoring**:
+- Validation events MUST be logged for security monitoring and incident response
+- Log entries MUST NOT contain sensitive token information or client identifiers
+- Monitoring systems MUST detect abnormal validation patterns and potential attacks
+- Audit trails MUST be maintained for security investigations and compliance
+
 ## Issuer Trust
 
-- Relays MUST maintain a trusted set of Privacy Pass issuers
-- Issuer key rotation procedures MUST be implemented
-- Revocation mechanisms SHOULD be supported for compromised issuers
+Establishing and maintaining trust relationships with Privacy Pass issuers is fundamental to the security of the entire MoQ authorization system. Trust management involves multiple dimensions including cryptographic key management, operational security, and ongoing monitoring of issuer behavior.
+
+Relays MUST maintain a trusted set of Privacy Pass issuers through a comprehensive trust framework that includes issuer identification, key management, and ongoing trust evaluation. This trust framework should be based on established security practices and industry standards for public key infrastructure management.
+
+**Issuer Registration and Validation**:
+The initial establishment of trust with a Privacy Pass issuer requires thorough validation of the issuer's identity, security practices, and operational procedures. This process typically involves:
+
+- Verification of issuer legal identity and regulatory compliance
+- Assessment of issuer security practices and infrastructure
+- Validation of issuer cryptographic key management procedures
+- Evaluation of issuer operational security and incident response capabilities
+
+**Key Management and Rotation**:
+Issuer key rotation procedures MUST be implemented to maintain cryptographic security over time. Key rotation involves coordinated updates to cryptographic keys used for token signing and validation, requiring careful coordination between issuers and relays to prevent service disruption.
+
+The key rotation process includes several critical phases:
+- Advanced notice to all relays about upcoming key rotation
+- Gradual rollout of new keys with overlap periods for transition
+- Validation of new key functionality before full deployment
+- Retirement of old keys with appropriate grace periods
+
+**Trust Revocation and Recovery**:
+Revocation mechanisms SHOULD be supported for compromised issuers to maintain system security when issuer trust is broken. The revocation process must balance security requirements with operational continuity, providing mechanisms for rapid response to security incidents while minimizing impact on legitimate users.
+
+Emergency revocation procedures should include:
+- Immediate notification systems for security incidents
+- Automated key revocation and distribution mechanisms
+- Fallback procedures for service continuity during revocation
+- Trust recovery procedures for issuers addressing security issues
 
 ## Rate Limiting
 
-- Issuers SHOULD implement rate limiting to prevent abuse
-- Relays SHOULD implement per-client rate limiting based on token metadata
-- Distributed rate limiting mechanisms SHOULD be considered for multi-relay deployments
+Rate limiting is essential for preventing abuse of the Privacy Pass token system and ensuring fair resource allocation across all users. Effective rate limiting requires coordination between issuers and relays to prevent both token abuse and service disruption.
+
+**Issuer-Level Rate Limiting**:
+Issuers SHOULD implement rate limiting to prevent abuse of the token issuance process. This includes limiting the number of tokens issued per client, per time period, and per attestation event. Rate limiting at the issuer level helps prevent token stockpiling and reduces the impact of compromised clients.
+
+The issuer rate limiting strategy should consider:
+- Client authentication and identification for rate limiting purposes
+- Different rate limits for different client classes or subscription levels
+- Adaptive rate limiting based on system load and abuse detection
+- Coordination with attestation services to validate rate limiting decisions
+
+**Relay-Level Rate Limiting**:
+Relays SHOULD implement per-client rate limiting based on token metadata to prevent abuse of media access and ensure fair resource allocation. This includes limiting bandwidth usage, concurrent connections, and request frequency based on token-specified limits.
+
+Relay rate limiting mechanisms should include:
+- Token metadata analysis to extract rate limiting parameters
+- Client identification and tracking for rate limiting enforcement
+- Dynamic rate limiting adjustments based on system load and capacity
+- Graceful degradation mechanisms when rate limits are exceeded
+
+**Distributed Rate Limiting**:
+Distributed rate limiting mechanisms SHOULD be considered for multi-relay deployments to ensure consistent rate limiting across the entire system. This requires coordination between relays to share rate limiting information and prevent clients from bypassing limits by using different relays.
 
 ### Rate Limiting Implementation
 
-- **Token Bucket Algorithm**: Recommended for smooth rate limiting
-- **Sliding Window**: Alternative approach for burst handling
-- **Distributed Counting**: Coordination across multiple relay instances
-- **Metadata-Based Limits**: Use token metadata to enforce different limits per client class
+**Token Bucket Algorithm**: The token bucket algorithm is recommended for smooth rate limiting that allows for controlled burst behavior while maintaining long-term rate limits. This algorithm maintains a bucket of tokens that refills at a constant rate, with each client request consuming tokens from the bucket.
+
+Implementation considerations for token bucket rate limiting include:
+- Bucket size determination based on expected burst requirements
+- Refill rate calculation based on sustainable service levels
+- Bucket state persistence across system restarts and failovers
+- Efficient bucket management for large numbers of concurrent clients
+
+**Sliding Window**: The sliding window approach provides an alternative for burst handling with more predictable behavior over time. This method tracks request rates over fixed time windows and rejects requests when rates exceed configured thresholds.
+
+Sliding window implementation details include:
+- Window size selection based on application requirements
+- Request counting and aggregation across time windows
+- Memory-efficient storage of window data for large client populations
+- Precision trade-offs between accuracy and computational efficiency
+
+**Distributed Counting**: Coordination across multiple relay instances requires distributed counting mechanisms to maintain consistent rate limiting across the entire system. This involves sharing rate limiting state between relays and coordinating rate limiting decisions.
+
+Distributed counting approaches include:
+- Centralized rate limiting databases with high availability
+- Distributed consensus mechanisms for rate limiting decisions
+- Approximate counting algorithms for scalability
+- Conflict resolution mechanisms for distributed rate limiting conflicts
+
+**Metadata-Based Limits**: Token metadata can be used to enforce different limits per client class, providing flexible rate limiting based on subscription levels, content types, or other authorization criteria. This allows for differentiated service levels while maintaining privacy protection.
+
+Metadata-based rate limiting includes:
+- Metadata parsing and validation for rate limiting parameters
+- Client classification based on token metadata
+- Dynamic rate limit adjustment based on metadata changes
+- Audit and compliance mechanisms for metadata-based rate limiting
 
 ## Error Handling
 
+Robust error handling is crucial for maintaining system security and user experience in Privacy Pass MoQ deployments. Error handling must balance security requirements with operational needs, providing sufficient information for troubleshooting while avoiding information leakage that could compromise privacy or security.
+
 ### Token Validation Errors
 
-Relays MUST handle token validation errors gracefully and provide appropriate error responses:
+Relays MUST handle token validation errors gracefully and provide appropriate error responses that maintain security while enabling proper client behavior. Error handling should be consistent across all MoQ operations and provide standardized error codes and messages.
 
-- **Invalid Signature**: Return SUBSCRIBE_ERROR, FETCH_ERROR, or ANNOUNCE_ERROR with error code 0x01
-- **Expired Token**: Return error with code 0x02 and include current server time
-- **Scope Mismatch**: Return error with code 0x03 and specify required authorization scope
-- **Rate Limit Exceeded**: Return error with code 0x04 and include retry-after information
-- **Replayed Token**: Return error with code 0x05 to prevent replay attacks
+**Invalid Signature Errors**:
+When cryptographic validation fails, relays should return SUBSCRIBE_ERROR, FETCH_ERROR, or ANNOUNCE_ERROR with error code 0x01. This error indicates fundamental token integrity issues that typically require client-side resolution through token reissuance.
+
+Error handling for invalid signatures must:
+- Avoid leaking information about the expected signature format
+- Provide consistent timing regardless of signature validation failure mode
+- Log security events for monitoring and incident response
+- Prevent retries that could be used for cryptographic attacks
+
+**Expired Token Errors**:
+Token expiration errors should return error code 0x02 and include current server time to help clients synchronize their token renewal processes. This information helps clients understand when to request new tokens while maintaining privacy.
+
+Expired token error handling should:
+- Provide accurate server time information for client synchronization
+- Implement graceful degradation for recently expired tokens
+- Support token refresh mechanisms to minimize service disruption
+- Monitor expiration patterns to detect potential attacks
+
+**Scope Mismatch Errors**:
+When tokens don't authorize the requested operation, relays should return error code 0x03 and specify the required authorization scope. This helps clients understand what tokens they need to obtain for successful authorization.
+
+Scope mismatch handling includes:
+- Clear specification of required authorization parameters
+- Guidance on obtaining appropriately scoped tokens
+- Prevention of scope enumeration attacks through consistent responses
+- Support for hierarchical and pattern-based scope matching
+
+**Rate Limit Exceeded Errors**:
+Rate limiting errors should return error code 0x04 and include retry-after information to help clients implement proper backoff behavior. This prevents clients from overwhelming services while providing clear guidance on when to retry.
+
+Rate limit error handling should:
+- Provide accurate retry timing information
+- Implement exponential backoff enforcement
+- Support burst allowances for legitimate use cases
+- Monitor rate limiting patterns to detect abuse
+
+**Replayed Token Errors**:
+Token replay detection should return error code 0x05 to prevent replay attacks while providing clear feedback about the token reuse issue. This helps clients understand when their tokens have been compromised or improperly reused.
+
+Replay error handling includes:
+- Clear indication of token reuse detection
+- Guidance on obtaining fresh tokens
+- Security monitoring for replay attack patterns
+- Coordination with issuer services for token revocation
 
 ### Issuer Availability
 
-When issuer services are unavailable:
+When issuer services are unavailable, systems must maintain service continuity while preserving security guarantees. This requires careful balance between availability and security, with appropriate fallback mechanisms and degraded service modes.
 
-- **Graceful Degradation**: Accept cached validation results for recently validated tokens
-- **Fallback Mechanisms**: Implement backup issuer services or manual override capabilities
-- **Client Retry Logic**: Clients SHOULD implement exponential backoff for issuer requests
-- **Status Communication**: Provide clear error messages to clients about service availability
+**Graceful Degradation**:
+Systems should accept cached validation results for recently validated tokens when issuer services are unavailable. This maintains service continuity while limiting the security impact of issuer unavailability.
+
+Graceful degradation strategies include:
+- Time-limited acceptance of cached validation results
+- Reduced functionality during issuer unavailability
+- Prioritization of high-priority operations during degraded operation
+- Automatic recovery when issuer services return
+
+**Fallback Mechanisms**:
+Deployments should implement backup issuer services or manual override capabilities to maintain service availability during extended issuer outages. These mechanisms must maintain security guarantees while providing operational flexibility.
+
+Fallback mechanism considerations:
+- Backup issuer selection and trust establishment
+- Manual override procedures and authorization requirements
+- Security monitoring during fallback operation
+- Transition procedures when primary issuers return
+
+**Client Retry Logic**:
+Clients SHOULD implement exponential backoff for issuer requests to prevent overwhelming recovering services while ensuring timely token acquisition. This requires coordination between client behavior and service capacity.
+
+Client retry strategies should include:
+- Exponential backoff with jitter to prevent thundering herd effects
+- Maximum retry limits to prevent indefinite retry loops
+- Service health monitoring to optimize retry timing
+- Fallback to alternative issuers when available
+
+**Status Communication**:
+Systems should provide clear error messages to clients about service availability to help clients make appropriate decisions about token acquisition and usage. This includes both immediate error responses and ongoing status communication.
+
+Status communication mechanisms include:
+- Standardized error codes for different unavailability scenarios
+- Service health endpoints for client monitoring
+- Notification systems for planned maintenance and outages
+- Documentation of expected service recovery times
 
 ### Network Failure Scenarios
 
-- **Partition Tolerance**: Design systems to handle network partitions between components
-- **Offline Operation**: Consider token pre-fetching for offline or low-connectivity scenarios
-- **Recovery Procedures**: Implement automatic recovery when network connectivity is restored
+Network failures present unique challenges for distributed Privacy Pass systems, requiring careful design to maintain security and availability across network partitions and connectivity issues.
+
+**Partition Tolerance**:
+Systems must be designed to handle network partitions between components while maintaining security guarantees and service availability. This requires distributed system design principles and careful consideration of consistency and availability trade-offs.
+
+Partition tolerance strategies include:
+- Distributed consensus mechanisms for critical operations
+- Local validation capabilities to maintain service during partitions
+- Conflict resolution procedures for partition recovery
+- Monitoring and alerting for partition detection
+
+**Offline Operation**:
+Systems should consider token pre-fetching for offline or low-connectivity scenarios to maintain service availability when network connections are unreliable. This requires careful balance between availability and security.
+
+Offline operation considerations:
+- Token prefetching strategies and storage security
+- Offline validation capabilities and limitations
+- Synchronization procedures when connectivity returns
+- Security monitoring for offline operation abuse
+
+**Recovery Procedures**:
+Systems should implement automatic recovery when network connectivity is restored to minimize operational overhead and service disruption. Recovery procedures must handle potential data inconsistencies and security issues.
+
+Recovery procedure requirements:
+- Automatic detection of connectivity restoration
+- State synchronization across distributed components
+- Conflict resolution for operations during partition
+- Security validation during recovery process
 
 ### Compromise Response
 
-In case of key compromise or security incidents:
+In case of key compromise or security incidents, systems must provide rapid response capabilities while maintaining service availability and minimizing impact on legitimate users.
 
-- **Emergency Revocation**: Implement emergency token revocation capabilities
-- **Key Rotation**: Rapid key rotation procedures for compromised issuers
-- **Incident Response**: Coordinated response procedures for federated deployments
-- **Client Notification**: Mechanisms to notify clients of security incidents
+**Emergency Revocation**:
+Systems should implement emergency token revocation capabilities to respond quickly to security incidents. This requires coordination across distributed components and careful consideration of revocation propagation.
+
+Emergency revocation capabilities include:
+- Rapid revocation distribution mechanisms
+- Prioritized revocation for high-risk situations
+- Coordination with client notification systems
+- Fallback procedures when revocation systems fail
+
+**Key Rotation**:
+Systems should support rapid key rotation procedures for compromised issuers to restore security while minimizing service disruption. This requires careful coordination between issuers and relays.
+
+Key rotation procedures include:
+- Emergency key generation and distribution
+- Coordinated cutover to new keys
+- Validation of new key functionality
+- Secure disposal of compromised keys
+
+**Incident Response**:
+Federated deployments require coordinated response procedures for security incidents to ensure consistent response across all participating organizations. This includes communication protocols and technical coordination.
+
+Incident response coordination includes:
+- Standardized incident communication protocols
+- Technical coordination for cross-organization response
+- Shared threat intelligence and indicator sharing
+- Post-incident analysis and improvement processes
+
+**Client Notification**:
+Systems should provide mechanisms to notify clients of security incidents that may affect their tokens or service access. This includes both immediate notification and ongoing status updates.
+
+Client notification mechanisms include:
+- Push notification systems for immediate alerts
+- Service status pages for ongoing incident updates
+- Email and SMS notification for account-level incidents
+- In-application notification for service disruptions
 
 # IANA Considerations
 
