@@ -33,6 +33,9 @@ normative:
   RFC9576:
     title: "The Privacy Pass Architecture"
     target: https://www.rfc-editor.org/rfc/rfc9576.txt
+  RFC9577:
+    title: "The Privacy Pass HTTP Authentication Scheme"
+    target: https://www.rfc-editor.org/rfc/rfc9577.txt
   MoQ-TRANSPORT:
     title: "Media over QUIC Transport"
     target: https://www.ietf.org/archive/id/draft-ietf-moq-transport-12.txt
@@ -61,7 +64,7 @@ The integration addresses key privacy concerns in media streaming scenarios wher
 
 Media over QUIC (MoQ) {{MoQ-TRANSPORT}} provides a transport protocol for live and on-demand media delivery, real-time communication, and interactive content distribution over QUIC connections. The protocol supports a wide range of applications including video streaming, video conferencing, gaming, interactive broadcasts, and other latency-sensitive use cases. MoQ includes mechanisms for authorization through tokens that can be used to control access to media streams, interactive sessions, and relay operations. However, traditional authorization mechanisms can create privacy concerns in these scenarios, where user behavior patterns, communication metadata, and content preferences may be exposed to service providers and intermediaries.
 
-Privacy Pass {{RFC9576}} provides a privacy-preserving authentication mechanism that allows clients to prove their eligibility for services without revealing identifying information. The protocol uses cryptographic techniques, specifically Oblivious Pseudorandom Functions (OPRFs), to ensure that service providers cannot link authorization tokens to specific users or correlate multiple requests from the same client. This document defines how Privacy Pass tokens can be integrated with MoQ's authorization framework to provide privacy-preserving access control for media streaming, real-time communication, and interactive content services.
+Privacy Pass {{RFC9576}} provides a privacy-preserving authentication mechanism that allows clients to prove their eligibility for services without revealing identifying information. The protocol uses cryptographic techniques, specifically Oblivious Pseudorandom Functions (OPRFs), to ensure that service providers cannot link authorization tokens to specific users or correlate multiple requests from the same client. The Privacy Pass HTTP Authentication Scheme {{RFC9577}} defines the "PrivateToken" authentication scheme that enables this privacy-preserving authentication over HTTP. This document defines how Privacy Pass tokens can be integrated with MoQ's authorization framework to provide privacy-preserving access control for media streaming, real-time communication, and interactive content services.
 
 The integration addresses several key use cases in modern media distribution and real-time communication:
 
@@ -346,7 +349,7 @@ This document registers the following token types for use with MoQ:
 
 ## Token Structure
 
-Privacy Pass tokens used in MoQ MUST follow the structure defined in {{RFC9576}} and use the issuance protocols specified in {{RFC9578}} with MoQ-specific adaptations. The token structure is designed to balance privacy protection with the functional requirements of media transport authorization.
+Privacy Pass tokens used in MoQ MUST follow the structure defined in {{RFC9576}} and use the issuance protocols specified in {{RFC9578}} with MoQ-specific adaptations. The token authentication follows the "PrivateToken" HTTP authentication scheme defined in {{RFC9577}}, adapted for use within MoQ's authorization framework. The token structure is designed to balance privacy protection with the functional requirements of media transport authorization.
 
 The basic token structure consists of several key components:
 
@@ -561,7 +564,7 @@ The token challenge and redemption process follows the Privacy Pass architecture
 
 ### Supported Token Types
 
-This specification supports both issuance protocol variants defined in {{RFC9578}}:
+This specification supports both issuance protocol variants defined in {{RFC9578}}, with token authentication following the "PrivateToken" authentication scheme defined in {{RFC9577}}:
 
 - **Privately Verifiable Tokens**: Using VOPRF with P-384 and SHA-384
   - **Use Case**: Scenarios where only the issuer needs to verify tokens
@@ -1171,7 +1174,7 @@ The threat model for Privacy Pass in MoQ environments considers multiple categor
 
 ## Token Validation
 
-Proper token validation is critical to the security of the entire system. Relays MUST properly validate Privacy Pass tokens according to {{RFC9576}} and {{RFC9578}}, with additional considerations for MoQ-specific requirements and performance constraints.
+Proper token validation is critical to the security of the entire system. Relays MUST properly validate Privacy Pass tokens according to {{RFC9576}}, {{RFC9577}}, and {{RFC9578}}, with additional considerations for MoQ-specific requirements and performance constraints.
 
 The token validation process includes multiple layers of verification:
 
