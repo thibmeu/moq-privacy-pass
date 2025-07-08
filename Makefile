@@ -2,7 +2,7 @@
 # Converts kramdown-rfc to various output formats using xml2rfc
 
 # Document name (without extension)
-DOCNAME = draft-privacy-pass-moq-auth
+DOCNAME = draft-jennings-moq-privacy-pass-auth
 
 # Source files
 KRAMDOWN_SRC = $(DOCNAME).md
