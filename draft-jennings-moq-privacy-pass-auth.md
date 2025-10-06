@@ -22,14 +22,14 @@ pi: [toc, sortrefs, symrefs, docmapping]
 
 author:
  -
+    name: "Suhas Nandakumar"
+    organization: "Cisco"
+    email: "snandaku@cisco.com"
+ -
     name: "Cullen Jennings"
     organization: "Cisco"
     email: "fluffy@iii.ca"
 
- -
-    name: "Suhas Nandakumar"
-    organization: "Cisco"
-    email: "snandaku@cisco.com"
 
 normative:
   RFC9576:
@@ -62,6 +62,11 @@ framework to provide privacy-preserving authentication for subscriptions,
 fetches, publications, and relay operations while supporting fine-grained 
 access control through prefix-based track namespace and track name matching 
 rules.
+
+
+
+Issues and PRs can be made against https://github.com/suhasHere/moq-privacy-pass.
+
 
 --- middle
 
