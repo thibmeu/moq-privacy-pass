@@ -33,14 +33,17 @@ author:
 
 
 normative:
+  MoQ-TRANSPORT: I-D.draft-ietf-moq-transport
+  RFC2119:
   RFC9576:
   RFC9577:
   RFC9578:
-  MoQ-TRANSPORT: I-D.draft-ietf-moq-transport
-  RFC2119:
 
 informative:
   RFC9458:
+  PRIVACYPASS-IANA:
+    title: Privacy Pass IANA
+    target: https://www.iana.org/assignments/privacy-pass/privacy-pass.xhtml
 
 --- abstract
 
@@ -173,7 +176,7 @@ across multiple relays.
 ## Token Structure
 
 Privacy Pass tokens used in MoQ MUST follow the structure defined in
-{{RFC9577}} for the PrivateToken HTTP authentication scheme. The token
+{{Section 2.2 of RFC9577}} for the PrivateToken HTTP authentication scheme. The token
 structure includes:
 
 - **Token Type**: 2-byte identifier specifying the issuance protocol used
@@ -185,7 +188,7 @@ structure includes:
 ### Token Challenge Structure for MoQ
 
 MoQ-specific TokenChallenge structures use the default format defined in
-{{RFC9577}} with MoQ-specific parameters in the origin_info field:
+{{Section 2.1 of RFC9577}} with MoQ-specific parameters in the origin_info field:
 
 ~~~
 struct {
@@ -273,8 +276,8 @@ message (SETUP, SUBSCRIBE, FETCH, PUBLISH, or ANNOUNCE)
 2. Verify the token signature using the appropriate
 issuer public key based on the token type:
 
-   - For Token Type 0x0001 (VOPRF): Use the issuer's private validation key
-   - For Token Type 0x0002 (Blind RSA): Use the issuer's public verification key
+   - For Token Type 0x0001 (VOPRF(P-384, SHA-384)): Use the issuer's private validation key
+   - For Token Type 0x0002 (Blind RSA(2048 bits)): Use the issuer's public verification key
 
 3. Validate that the token has not been replayed by checking:
 
@@ -364,40 +367,28 @@ SUBSCRIBE {
 Below shows an example deployment scenarios where the relay has been
 configured with the necessary validation keys and content policies, the
 relay can verify Privacy Pass tokens locally and deliver media directly
-without contacting the Origin.
+without contacting the Issuer. This uses token with public verifiability.
 
 ~~~~~aasvg
-                    Direct Relay Authorization Flow
-
-   Client      MoQ Relay             Issuer          Attester
-     |            |                    |                |
-     |            |                    |                |
-     | (1) Request Service Access      |                |
-     |----------->|                    |                |
-     |            |                    |                |
-     |  (2) Challenge (TokenChallenge) |                |
-     |<-----------|                    |                |
-     |            |                    |                |
-     |  (3) Attestation Request        |                |
-     |---------------------------------|--------------->|
-     |  (4) Attestation                |                |
-     |<-------------------------------------------------|
-     |  (5) Token Request              |                |
-     |-------------------------------->|                |
-     |  (6) Token                      |                |
-     |<--------------------------------|                |
-     |            |                    |                |
-     |  (7) SUBSCRIBE with Token       |                |
-     |----------->|                    |                |
-     |            |                    |                |
-     |            |  (8) Local Token Validation         |
-     |            |     (No external call)              |
-     |            |                    |                |
-     |            |                    |                |
-     |  (9) SUBSCRIBE_OK + Media       |                |
-     |<-----------|                    |                |
-     |            |                    |                |
++-----------+                +--------+         +----------+ +--------+
+| MoQ Relay |                | Client |         | Attester | | Issuer |
++-----+-----+                +---+----+         +----+-----+ +---+----+
+      |                          |                   |           |
+      |<- Request Service Access +                   |           |
+      +--- TokenChallenge ------>|                   |           |
+      |                          |<== Attestation ==>|           |
+      |                          |                   |           |
+      |                          +--------- TokenRequest ------->|
+      |                          |<-------- TokenResponse -------+
+      |                          |                   |           |
+      |<---- SUBSCRIBE+Token ----+                   |           |
+ .----+-----------.              |                   |           |
+| Local validation |             |                   |           |
+ `----+-----------'              |                   |           |
+      +-- SUBSCRIBE_OK+Media --->|                   |           |
+      |                          |                   |           |
 ~~~~~
+{: #direct-relay-authorization-flow title="Direct Relay Authorization Flow"}
 
 
 # Security Considerations
@@ -405,9 +396,17 @@ without contacting the Origin.
 TODO: Add considerations for the security and privacy of the Privacy Pass
 tokens.
 
+* Token Replay
+* Token harvest
+* Key rotation
+* Use of TLS
+
 # IANA Considerations
 
 TODO
+
+* Register namespace?
+* New registry for auth_scheme with 0x01 as the first registered auth_scheme
 
 
 --- back
