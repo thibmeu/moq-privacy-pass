@@ -5,7 +5,7 @@
 Media Over QUIC                                            S. Nandakumar
 Internet-Draft                                               C. Jennings
 Intended status: Standards Track                                   Cisco
-Expires: 15 April 2026                                   12 October 2025
+Expires: 20 April 2026                                   17 October 2025
 
 
          Privacy Pass Authentication for Media over QUIC (MoQ)
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 April 2026.
+   This Internet-Draft will expire on 20 April 2026.
 
 Copyright Notice
 
@@ -224,8 +224,8 @@ Table of Contents
 3.2.  Token Structure
 
    Privacy Pass tokens used in MoQ MUST follow the structure defined in
-   [RFC9577] for the PrivateToken HTTP authentication scheme.  The token
-   structure includes:
+   Section 2.2 of [RFC9577] for the PrivateToken HTTP authentication
+   scheme.  The token structure includes:
 
    *  *Token Type*: 2-byte identifier specifying the issuance protocol
       used
@@ -243,7 +243,8 @@ Table of Contents
 3.2.1.  Token Challenge Structure for MoQ
 
    MoQ-specific TokenChallenge structures use the default format defined
-   in [RFC9577] with MoQ-specific parameters in the origin_info field:
+   in Section 2.1 of [RFC9577] with MoQ-specific parameters in the
+   origin_info field:
 
    struct {
        uint16_t token_type;
@@ -332,11 +333,11 @@ Table of Contents
    2.  Verify the token signature using the appropriate issuer public
        key based on the token type:
 
-       *  For Token Type 0x0001 (VOPRF): Use the issuer's private
-          validation key
+       *  For Token Type 0x0001 (VOPRF(P-384, SHA-384)): Use the
+          issuer's private validation key
 
-       *  For Token Type 0x0002 (Blind RSA): Use the issuer's public
-          verification key
+       *  For Token Type 0x0002 (Blind RSA(2048 bits)): Use the issuer's
+          public verification key
 
    3.  Validate that the token has not been replayed by checking:
 
@@ -437,47 +438,50 @@ Table of Contents
    Below shows an example deployment scenarios where the relay has been
    configured with the necessary validation keys and content policies,
    the relay can verify Privacy Pass tokens locally and deliver media
-   directly without contacting the Origin.
+   directly without contacting the Issuer.  This uses token with public
+   verifiability.
 
-                       Direct Relay Authorization Flow
+ +-----------+                +--------+         +----------+ +--------+
+ | MoQ Relay |                | Client |         | Attester | | Issuer |
+ +-----+-----+                +---+----+         +----+-----+ +---+----+
+       |                          |                   |           |
+       |<- Request Service Access +                   |           |
+       +--- TokenChallenge ------>|                   |           |
+       |                          |<== Attestation ==>|           |
+       |                          |                   |           |
+       |                          +--------- TokenRequest ------->|
+       |                          |<-------- TokenResponse -------+
+       |                          |                   |           |
+       |<---- SUBSCRIBE+Token ----+                   |           |
+  .----+-----------.              |                   |           |
+ | Local validation |             |                   |           |
+  `----+-----------'              |                   |           |
+       +-- SUBSCRIBE_OK+Media --->|                   |           |
+       |                          |                   |           |
 
-      Client      MoQ Relay             Issuer          Attester
-        |            |                    |                |
-        |            |                    |                |
-        | (1) Request Service Access      |                |
-        |----------->|                    |                |
-        |            |                    |                |
-        |  (2) Challenge (TokenChallenge) |                |
-        |<-----------|                    |                |
-        |            |                    |                |
-        |  (3) Attestation Request        |                |
-        |---------------------------------|--------------->|
-        |  (4) Attestation                |                |
-        |<-------------------------------------------------|
-        |  (5) Token Request              |                |
-        |-------------------------------->|                |
-        |  (6) Token                      |                |
-        |<--------------------------------|                |
-        |            |                    |                |
-        |  (7) SUBSCRIBE with Token       |                |
-        |----------->|                    |                |
-        |            |                    |                |
-        |            |  (8) Local Token Validation         |
-        |            |     (No external call)              |
-        |            |                    |                |
-        |            |                    |                |
-        |  (9) SUBSCRIBE_OK + Media       |                |
-        |<-----------|                    |                |
-        |            |                    |                |
+               Figure 2: Direct Relay Authorization Flow
 
 5.  Security Considerations
 
    TODO: Add considerations for the security and privacy of the Privacy
    Pass tokens.
 
+   *  Token Replay
+
+   *  Token harvest
+
+   *  Key rotation
+
+   *  Use of TLS
+
 6.  IANA Considerations
 
    TODO
+
+   *  Register namespace?
+
+   *  New registry for auth_scheme with 0x01 as the first registered
+      auth_scheme
 
 7.  References
 
@@ -514,6 +518,11 @@ Table of Contents
               <https://www.rfc-editor.org/rfc/rfc9578>.
 
 7.2.  Informative References
+
+   [PRIVACYPASS-IANA]
+              "Privacy Pass IANA", n.d.,
+              <https://www.iana.org/assignments/privacy-pass/privacy-
+              pass.xhtml>.
 
    [RFC9458]  Thomson, M. and C. A. Wood, "Oblivious HTTP", RFC 9458,
               DOI 10.17487/RFC9458, January 2024,
